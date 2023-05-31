@@ -107,9 +107,10 @@ Status RunSPMDOptimizer(HloModule *hlo_module, int64_t num_partitions) {
     spmd_simplify.AddPass<HloDCE>();
 
     spmd_pipeline.AddPass<HloConstantSplitter>();
+    bool allow_spmd_sharding_propagation_to_output[] = { true };
     spmd_pipeline.AddPass<ShardingPropagation>(
         /*is_spmd=*/true, /*propagate_metadata=*/false,
-        hlo_module->config().allow_spmd_sharding_propagation_to_output());
+        absl::MakeSpan(allow_spmd_sharding_propagation_to_output));
     spmd_pipeline.AddPass<spmd::StatefulRngSpmdPartitioner>(
         num_partitions, hlo_module->config().replica_count());
     spmd_pipeline.AddPass<CollectivePermuteMotion>();
