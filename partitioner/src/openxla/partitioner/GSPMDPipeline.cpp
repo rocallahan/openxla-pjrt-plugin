@@ -7,7 +7,11 @@
 #include "openxla/partitioner/GSPMDPipeline.h"
 
 #include "mhlo/transforms/passes.h"
+#include "mhlo/IR/register.h"
 #include "mlir/IR/BuiltinOps.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/SparseTensor/IR/SparseTensor.h"
 #include "xla/hlo/ir/hlo_module.h"
 #include "xla/hlo/transforms/hlo_constant_splitter.h"
 #include "xla/service/algebraic_simplifier.h"
@@ -140,6 +144,14 @@ class RunGSPMDPartitionerPass
     : public PassWrapper<RunGSPMDPartitionerPass, OperationPass<ModuleOp>> {
  public:
   RunGSPMDPartitionerPass(GSPMDOptions options) : options(options) {}
+
+  void getDependentDialects(DialectRegistry &registry) const override {
+    // HloFunctionImporter needs these
+    registry.insert<arith::ArithDialect>();
+    registry.insert<func::FuncDialect>();
+    mhlo::registerAllMhloDialects(registry);
+    registry.insert<sparse_tensor::SparseTensorDialect>();
+  }
 
  private:
   StringRef getArgument() const override { return "openxla-partitioner-gspmd"; }
